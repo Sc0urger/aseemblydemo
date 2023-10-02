@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assembly Summer 2023</title>
+  <style>
+    body { margin: 0; padding: 0; overflow: hidden; }
+    canvas { display: block; margin: 0; padding: 0; }
+  </style>
+</head>
+<body onload="requestFullScreen()">
+  <canvas id="demoCanvas"></canvas>
+
+    <!-- Add the audio element for the music -->
+    <audio id="backgroundMusic" loop="true" volume="0.5">
+      <source src="path/to/your/music.mp3" type="audio/mpeg">
+      <!-- Add more <source> elements for different formats to improve compatibility -->
+      <!-- <source src="path/to/your/music.ogg" type="audio/ogg"> -->
+      Your browser does not support the audio element.
+    </audio>
+
+  <script>
+
+    const canvas = document.getElementById('demoCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+
+    const centerX = () => canvas.width / 2;
+    const centerY = () => canvas.height / 2;
+
+    function exitDemo() {
+      // Perform any cleanup or additional actions before closing the demo, if needed.
+      console.log("Exiting the demo.");
+      // You can add more actions here if necessary.
+
+      // Close the window/tab after a short delay (e.g., 2 seconds) using the `window.close()` method.
+      setTimeout(() => {
+        window.close();
+      }, 500);
+    }
+
+    class Cube {
+      constructor(size) {
+        this.size = size;
+        this.vertices = [
+          [-size / 2, -size / 2, -size / 2],
+          [size / 2, -size / 2, -size / 2],
+          [size / 2, size / 2, -size / 2],
+          [-size / 2, size / 2, -size / 2],
+          [-size / 2, -size / 2, size / 2],
+          [size / 2, -size / 2, size / 2],
+          [size / 2, size / 2, size / 2],
+          [-size / 2, size / 2, size / 2]
+        ];
+
+        this.edges = [
+          [0, 1], [1, 2], [2, 3], [3, 0],
+          [4, 5], [5, 6], [6, 7], [7, 4],
+          [0, 4], [1, 5], [2, 6], [3, 7]
+        ];
+      }
+    }
+
+    class Pyramid {
+      constructor(size) {
+        this.size = size;
+        this.vertices = [
+          [0, size / 2, 0],
+          [-size / 2, -size / 2, -size / 2],
+          [size / 2, -size / 2, -size / 2],
+          [size / 2, -size / 2, size / 2],
+          [-size / 2, -size / 2, size / 2]
+        ];
+
+        this.edges = [
+          [0, 1], [0, 2], [0, 3], [0, 4],
+          [1, 2], [2, 3], [3, 4], [4, 1]
+        ];
+      }
+    }
+
+    class Diamond {
+  constructor(size) {
+    this.size = size;
+    const halfSize = size / 2;
+    this.vertices = [
+      [0, halfSize, 0],
+      [-halfSize, 0, -halfSize],
+      [halfSize, 0, -halfSize],
+      [halfSize, 0, halfSize],
+      [-halfSize, 0, halfSize],
+      [0, -halfSize, 0],
+    ];
+
+    this.edges = [
+      [0, 1], [0, 2], [0, 3], [0, 4],
+      [5, 1], [5, 2], [5, 3], [5, 4],
+      [1, 2], [2, 3], [3, 4], [4, 1]
+    ];
+  }
+}
+
+class Octahedron {
+  constructor(size) {
+    this.size = size;
+    const halfSize = size / 2;
+    this.vertices = [
+      [0, halfSize, 0],
+      [0, -halfSize, 0],
+      [-halfSize, 0, 0],
+      [halfSize, 0, 0],
+      [0, 0, halfSize],
+      [0, 0, -halfSize],
+    ];
+
+    this.edges = [
+      [0, 2], [0, 3], [0, 4], [0, 5],
+      [1, 2], [1, 3], [1, 4], [1, 5],
+      [2, 4], [4, 3], [3, 5], [5, 2],
+    ];
+  }
+}
+
+class Dodecahedron {
+  constructor(size) {
+    this.size = size;
+    const phi = (1 + Math.sqrt(5)) / 2;
+    const a = (size / 2) / Math.sqrt(3);
+    const b = a / phi;
+    const c = a * phi;
+
+    this.vertices = [
+      [-a, -a, -a],
+      [-a, -a, a],
+      [-a, a, -a],
+      [-a, a, a],
+      [a, -a, -a],
+      [a, -a, a],
+      [a, a, -a],
+      [a, a, a],
+      [0, -b, -c],
+      [0, -b, c],
+      [0, b, -c],
+      [0, b, c],
+      [-b, -c, 0],
+      [-b, c, 0],
+      [b, -c, 0],
+      [b, c, 0],
+      [-c, 0, -b],
+      [-c, 0, b],
+      [c, 0, -b],
+      [c, 0, b],
+    ];
+
+    this.edges = [
+      [0, 8], [0, 12], [0, 16], [0, 2], [0, 4],
+      [1, 9], [1, 13], [1, 17], [1, 3], [1, 5],
+      [2, 10], [2, 14], [2, 16], [2, 4], [2, 6],
+      [3, 11], [3, 15], [3, 17], [3, 5], [3, 7],
+      [4, 8], [4, 14], [4, 18], [4, 6],
+      [5, 9], [5, 15], [5, 19], [5, 7],
+      [6, 10], [6, 18], [6, 19], [6, 7],
+      [7, 11], [7, 19], [7, 15],
+      [8, 10], [8, 12], [8, 18], [8, 9],
+      [9, 11], [9, 13], [9, 19], [9, 1], [9, 17],
+      [10, 12], [10, 14], [10, 16], [10, 18],
+      [11, 13], [11, 15], [11, 19], [11, 3], [11, 17],
+      [12, 14], [12, 16], [12, 2], [12, 10],
+      [13, 15], [13, 17], [13, 1],
+      [14, 18], [14, 4], [14, 8], [14, 6],
+      [15, 19], [15, 5], [15, 9], [15, 7],
+      [16, 18], [16, 2], [16, 10], [16, 12],
+      [17, 19], [17, 1], [17, 9], [17, 11],
+      [18, 4], [18, 8], [18, 10],
+      [19, 5], [19, 9], [19, 11],
+    ];
+  }
+
+  // New method to sort edges
+  sortEdges() {
+    this.edges.sort((a, b) => {
+      const [a1, a2] = a;
+      const [b1, b2] = b;
+      return Math.min(a1, a2) - Math.min(b1, b2) || Math.max(a1, a2) - Math.max(b1, b2);
+    });
+  }
+}
+
+class Icosahedron {
+      constructor(size) {
+        this.size = size;
+        const phi = (1 + Math.sqrt(5)) / 2;
+        const a = size / 2;
+        const b = a * phi;
+
+        this.vertices = [
+          [0, -b, -a], [0, -b, a], [0, b, -a], [0, b, a],
+          [-b, -a, 0], [-b, a, 0], [b, -a, 0], [b, a, 0],
+          [-a, 0, -b], [-a, 0, b], [a, 0, -b], [a, 0, b],
+        ];
+
+        this.edges = [
+          [0, 1], [1, 2], [2, 3], [3, 0],
+          [4, 5], [5, 6], [6, 7], [7, 4],
+          [0, 4], [1, 5], [2, 6], [3, 7],
+          [8, 9], [9, 10], [10, 11], [11, 8],
+          [0, 8], [1, 9], [2, 10], [3, 11],
+          [4, 8], [5, 9], [6, 10], [7, 11],
+        ];
+      }
+    }
+
+    // Define the Tetrahedron class
+    class Tetrahedron {
+      constructor(size) {
+        this.size = size;
+        const a = size / 2;
+
+        this.vertices = [
+          [a, a, a], [a, -a, -a], [-a, -a, a], [-a, a, -a]
+        ];
+
+        this.edges = [
+          [0, 1], [0, 2], [0, 3],
+          [1, 2], [1, 3],
+          [2, 3]
+        ];
+      }
+    }
+
+    // Define the Cylinder class
+    class Cylinder {
+      constructor(size) {
+        this.size = size;
+        const halfSize = size / 2;
+        const radius = size / 3;
+
+        this.vertices = [
+          [0, -halfSize, 0],
+          [0, halfSize, 0],
+        ];
+
+        this.edges = [];
+
+        // Top and bottom circles
+        for (let i = 0; i < 360; i += 30) {
+          const x = radius * Math.cos((i * Math.PI) / 180);
+          const z = radius * Math.sin((i * Math.PI) / 180);
+          this.vertices.push([x, -halfSize, z]);
+          this.vertices.push([x, halfSize, z]);
+
+          const v1 = this.vertices.length - 2;
+          const v2 = this.vertices.length - 1;
+          this.edges.push([v1, v2]);
+        }
+
+        // Connect the top and bottom circles
+        for (let i = 0; i < this.vertices.length - 4; i += 2) {
+          this.edges.push([i, i + 2]);
+          this.edges.push([i + 1, i + 3]);
+        }
+
+        this.edges.push([this.vertices.length - 2, 2]);
+        this.edges.push([this.vertices.length - 1, 3]);
+      }
+    }
+
+
+    // Define the Sphere class
+    class Sphere {
+      constructor(size) {
+        this.size = size;
+        const radius = size / 2;
+
+        this.vertices = [];
+        this.edges = [];
+
+        const latitudeBands = 10;
+        const longitudeBands = 10;
+
+        for (let lat = 0; lat <= latitudeBands; lat++) {
+          const theta = (lat * Math.PI) / latitudeBands;
+          const sinTheta = Math.sin(theta);
+          const cosTheta = Math.cos(theta);
+
+          for (let lon = 0; lon <= longitudeBands; lon++) {
+            const phi = (lon * 2 * Math.PI) / longitudeBands;
+            const sinPhi = Math.sin(phi);
+            const cosPhi = Math.cos(phi);
+
+            const x = radius * cosPhi * sinTheta;
+            const y = radius * cosTheta;
+            const z = radius * sinPhi * sinTheta;
+
+            this.vertices.push([x, y, z]);
+          }
+        }
+
+        for (let lat = 0; lat < latitudeBands; lat++) {
+          for (let lon = 0; lon < longitudeBands; lon++) {
+            const first = lat * (longitudeBands + 1) + lon;
+            const second = first + longitudeBands + 1;
+
+            this.edges.push([first, second]);
+            this.edges.push([second, first + 1]);
+          }
+        }
+      }
+    }
+
+    // Define the Cuboid class
+    class Cuboid {
+      constructor(size) {
+        this.size = size;
+        const halfSize = size / 2;
+
+        this.vertices = [
+          [-halfSize, -halfSize, -halfSize],
+          [halfSize, -halfSize, -halfSize],
+          [halfSize, halfSize, -halfSize],
+          [-halfSize, halfSize, -halfSize],
+          [-halfSize, -halfSize, halfSize],
+          [halfSize, -halfSize, halfSize],
+          [halfSize, halfSize, halfSize],
+          [-halfSize, halfSize, halfSize],
+        ];
+
+        this.edges = [
+          [0, 1], [1, 2], [2, 3], [3, 0],
+          [4, 5], [5, 6], [6, 7], [7, 4],
+          [0, 4], [1, 5], [2, 6], [3, 7]
+        ];
+      }
+    }
+
+    // Define the Pyramid with Square Base class
+    class PyramidSquareBase {
+      constructor(size) {
+        this.size = size;
+        const a = size / 2;
+
+        this.vertices = [
+          [a, 0, a], [-a, 0, a], [-a, 0, -a], [a, 0, -a], [0, size, 0]
+        ];
+
+        this.edges = [
+          [0, 1], [1, 2], [2, 3], [3, 0],
+          [0, 4], [1, 4], [2, 4], [3, 4]
+        ];
+      }
+    }
+
+    // Define the Double Pyramid class
+    class DoublePyramid {
+      constructor(size) {
+        this.size = size;
+        const a = size / 2;
+
+        this.vertices = [
+          [a, 0, a], [-a, 0, a], [-a, 0, -a], [a, 0, -a], [0, size, 0],
+          [a, size, a], [-a, size, a], [-a, size, -a], [a, size, -a], [0, 0, 0]
+        ];
+
+        this.edges = [
+          [0, 1], [1, 2], [2, 3], [3, 0],
+          [5, 6], [6, 7], [7, 8], [8, 5],
+          [0, 5], [1, 6], [2, 7], [3, 8],
+          [4, 0], [4, 1], [4, 2], [4, 3],
+        ];
+      }
+    }
+
+  class Torus {
+   constructor(mainRadius, tubeRadius, mainSegments, tubeSegments) {
+    this.mainRadius = mainRadius;
+    this.tubeRadius = tubeRadius;
+    this.mainSegments = mainSegments;
+    this.tubeSegments = tubeSegments;
+    this.vertices = [];
+    this.edges = [];
+
+    for (let i = 0; i <= this.mainSegments; i++) {
+      const mainAngle = (i / this.mainSegments) * Math.PI * 2;
+      const mainX = this.mainRadius * Math.cos(mainAngle);
+      const mainZ = this.mainRadius * Math.sin(mainAngle);
+
+      for (let j = 0; j <= this.tubeSegments; j++) {
+        const tubeAngle = (j / this.tubeSegments) * Math.PI * 2;
+        const tubeX = this.tubeRadius * Math.cos(tubeAngle);
+        const tubeY = this.tubeRadius * Math.sin(tubeAngle);
+
+        // Calculate the position of each vertex
+        const x = mainX + tubeX * Math.cos(mainAngle);
+        const y = tubeY;
+        const z = mainZ + tubeX * Math.sin(mainAngle);
+
+        this.vertices.push([x, y, z]);
+      }
+    }
+
+    // Create edges along longitude lines
+    for (let i = 0; i < this.mainSegments; i++) {
+      for (let j = 0; j < this.tubeSegments; j++) {
+        const currentIdx = i * (this.tubeSegments + 1) + j;
+        const nextMainIdx = (i + 1) * (this.tubeSegments + 1) + j;
+        const nextTubeIdx = i * (this.tubeSegments + 1) + (j + 1) % (this.tubeSegments + 1);
+
+        this.edges.push([currentIdx, nextMainIdx]);
+        this.edges.push([currentIdx, nextTubeIdx]);
+      }
+    }
+  }
+}
+
+    const text = "Thank you Assembly Summer 2024!!";
+    const thanks = "Greetings and thanks to: ChatGPT, korruptor, Eimink, ";
+    const beginning = "First demo";
+    const mid = "I know its bad but its still something";
+    let textPosition = canvas.width / 2;
+
+    // Define all the 3D shapes
+    const cube = new Cube(200);
+    const pyramid = new Pyramid(200);
+    const diamond = new Diamond(200);
+    const octahedron = new Octahedron(200);
+    const dodecahedron = new Dodecahedron(200);
+    const icosahedron = new Icosahedron(200);
+    const tetrahedron = new Tetrahedron(200);
+    const cylinder = new Cylinder(200);
+    const sphere = new Sphere(200);
+    const cuboid = new Cuboid(200);
+    const pyramidSquareBase = new PyramidSquareBase(200);
+    const doublePyramid = new DoublePyramid(200);
+    const torus = new Torus(200, 50, 30, 15);
+
+    dodecahedron.sortEdges();
+
+    const end = "THE END";
+    const close = "";
+
+    // Include all the scenes in the order you want them to appear
+    const scenes = [
+      beginning, cube, diamond,mid, octahedron, text,
+      icosahedron, tetrahedron, thanks, cylinder, sphere,torus, end, close
+    ];
+
+    let currentObject = beginning;
+    let switchTimeout;
+
+    function switchScene() {
+  const currentIndex = scenes.indexOf(currentObject);
+  currentObject = scenes[(currentIndex + 1) % scenes.length];
+  
+      if (currentObject === thanks) {
+        textPosition = canvas.width / 2; // Reset the text position when transitioning to "thanks"
+      }
+      else if (currentObject === close) {
+        // If the last scene is reached, exit the demo.
+        exitDemo();
+        return; // Don't proceed to set the timer for the last scene.
+      }
+  setSwitchTimer();
+}
+
+function setSwitchTimer() {
+  clearTimeout(switchTimeout);
+  let interval;
+  
+  if (currentObject === text) {
+    interval = 10000; // Set the custom timer for the text scene in milliseconds here
+  }
+   else if (currentObject === thanks) {
+    interval = 10000;
+  }
+  else if (currentObject === beginning) {
+    interval = 2000;
+  }
+   else if (currentObject === mid) {
+    interval = 2000;
+  }
+  else if (currentObject === end) {
+    interval = 2000;
+  }
+  else {
+    interval = 6000; // Set the scene switching interval for other shapes in milliseconds here
+  }
+
+  if (interval > 0) {
+    switchTimeout = setTimeout(switchScene, interval);
+  }
+}
+
+function multiplyMatrixVector(matrix, vector) {
+  const result = [];
+  for (let i = 0; i < matrix.length; i++) {
+    let sum = 0;
+    for (let j = 0; j < vector.length; j++) {
+      sum += matrix[i][j] * vector[j];
+    }
+    result.push(sum);
+  }
+  return result;
+}
+
+function createRotationMatrix(angleX, angleY, angleZ) {
+  const cosX = Math.cos(angleX);
+  const sinX = Math.sin(angleX);
+  const cosY = Math.cos(angleY);
+  const sinY = Math.sin(angleY);
+  const cosZ = Math.cos(angleZ);
+  const sinZ = Math.sin(angleZ);
+
+  return [    [cosY * cosZ, -cosY * sinZ, sinY],
+    [sinX * sinY * cosZ + cosX * sinZ, -sinX * sinY * sinZ + cosX * cosZ, -sinX * cosY],
+    [cosX * -sinY * cosZ - sinX * sinZ, cosX * -sinY * sinZ + sinX * cosZ, cosX * cosY]
+  ];
+}
+
+let angle = 0;
+let colorShift = 0;
+let pulse = 0;
+
+function drawObject(object, rotationMatrix) {
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+
+      const scale = 1 + 0.2 * Math.sin(pulse);
+      const transformedVertices = object.vertices.map(v => {
+        const scaledVertex = v.map(c => c * scale);
+        return multiplyMatrixVector(rotationMatrix, scaledVertex);
+      });
+
+      const edges = object.edges;
+      for (let i = 0; i < edges.length; i++) {
+        const v1 = transformedVertices[edges[i][0]];
+        const v2 = transformedVertices[edges[i][1]];
+
+        ctx.moveTo(v1[0] + centerX(), v1[1] + centerY());
+        ctx.lineTo(v2[0] + centerX(), v2[1] + centerY());
+      }
+
+      ctx.stroke();
+    }
+
+
+function drawScrollingText() {
+  ctx.font = "52px Arial";
+  ctx.fillStyle = "white";
+  ctx.fillText(text, textPosition, centerY());
+  textPosition -= 2; // Adjust scrolling speed
+  if (textPosition + ctx.measureText(text).width < 0) {
+    textPosition = canvas.width;
+  }
+}
+
+function drawScrollingTextThanks() {
+  ctx.font = "52px Arial";
+  ctx.fillStyle = "white";
+  ctx.fillText(thanks, textPosition, centerY());
+  textPosition -= 2; // Adjust scrolling speed
+  if (textPosition + ctx.measureText(text).width < 0) {
+    textPosition = canvas.width;
+  }
+}
+
+function staticTextBeginning() {
+  ctx.font = "52px Arial";
+  ctx.fillStyle = "white";
+      const textWidth = ctx.measureText(beginning).width;
+      ctx.fillText(beginning, centerX() - textWidth / 2, centerY());
+    }
+
+function staticTextMid() {
+  ctx.font = "52px Arial";
+  ctx.fillStyle = "white";
+      const textWidth = ctx.measureText(mid).width;
+      ctx.fillText(mid, centerX() - textWidth / 2, centerY());
+    }
+
+function staticTextEnd() {
+  ctx.font = "52px Arial";
+  ctx.fillStyle = "white";
+      const textWidth = ctx.measureText(end).width;
+      ctx.fillText(end, centerX() - textWidth / 2, centerY());
+    }
+
+
+function animate() {
+  // Change background color
+  ctx.fillStyle = `hsl(${(colorShift + 180) % 360}, 50%, 25%)`;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const rotationMatrix = createRotationMatrix(angle, angle * 0.75, angle * 0.5);
+
+    // Start the music
+  const backgroundMusic = document.getElementById('backgroundMusic');
+  backgroundMusic.volume = 1.0; // Set volume to 100%
+
+ if (currentObject === text) {
+    drawScrollingText();
+  } else if (currentObject === beginning) {
+   staticTextBeginning();
+  }
+  else if (currentObject === mid) {
+   staticTextMid();
+  }
+   else if (currentObject === end) {
+   staticTextEnd();
+  }
+  else if (currentObject === thanks) {
+   drawScrollingTextThanks();
+  }
+    else {
+    drawObject(currentObject, rotationMatrix);
+  }
+
+  angle += 0.015;
+  colorShift = (colorShift + 1) % 360;
+  pulse += 0.01;
+
+  requestAnimationFrame(animate);
+}
+
+animate();
+    setSwitchTimer();
+  </script>
+</body>
+</html>
